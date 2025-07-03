@@ -1,0 +1,27 @@
+h1 {
+    text-align: center;
+}
+
+.container {
+    margin: 0 auto;
+    padding: 60px 20%;
+}
+
+figure {
+    text-align: center;
+}
+
+img {
+    border-radius: 5%;
+    display: inline-block;
+}
+
+a {
+    color: #f0c561;
+}
+
+body {
+    background-color: #1d1e31;
+    color: #efe0bc;
+    font-family: "Montserrat", sans-serif;
+}
