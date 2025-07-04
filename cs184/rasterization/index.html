@@ -49,7 +49,7 @@
         actually decreased performance, so I left in the full dot product expression. Factoring out a <code>sample_triangle()</code> function reduced
         computation by 10-15 cycles, however.
 		
-		<h2>Task 2: Antialiasing by Supersampling</h2>
+		<h2>Antialiasing by Supersampling (Task 2)</h2>
 		Supersampling consisted of enlarging the sampling buffer, sampling at more points for each pixel, and averaging those samples.
         I enlarged the sampling buffer proportionally to the sampling rate so that each pixel had additional space for the additional samples.
         Then, when rasterizing each pixel, instead of writing only one value to the buffer, I wrote the sampling rate number of samples.
@@ -89,10 +89,46 @@
             </table>
         </div>
 
-		<h2>Task 3: Transforms</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<h2>Transforms (Task 3)</h2>
+        Transforms are quite simple. We use homogenous coordinates (3x1) to be able to translate points, with a 1 in the lower right corner to signify a point and 0 for a vector.
+        The matrix for translation looks like
 
-		<h2>Task 4: Barycentric coordinates</h2>
+        <figure style="float: inline-end;">
+            <img src="images/part3.png" width="300px"/>
+			<figcaption>It really suits him!</figcaption>
+        </figure>
+
+        \[
+            \begin{bmatrix}
+                1 & 0 & t_x \\
+                0 & 1 & t_y \\
+                0 & 0 & 1
+            \end{bmatrix}
+        \]
+        The result of a matrix multiplication of a column vector that is a point (i.e 1 at the bottom) will be the same as the original column vector, plus \(t_x\) in the x axis
+        and \(t_y\) in the y axis because the last value in the column vector is 1. For a vector, a translation should have no effect; and in fact it doesn't, because
+        the final row being 0 cancels any translations that would have happened. Similarly, the matrix for scaling is
+        \[
+            \begin{bmatrix}
+                s_x & 0 & 0 \\
+                0 & s_y & 0 \\
+                0 & 0 & 1
+            \end{bmatrix}
+        \]
+        This only multiplies the x and y components of the column vector by \(s_x\) and \(s_y\). The matrix for rotation can be derived from rotating the basis vectors around,
+        and can be represented as such:
+        \[
+            \begin{bmatrix}
+                cos(rot) & sin(rot) & 0 \\
+                sin(rot) & -cos(rot) & 0 \\
+                0 & 0 & 1
+            \end{bmatrix}
+        \]
+        Many images can be derived from translating, rotating, and scaling basic shapes. To demonstrate this, I have made a robot that is tidying their tie, composed of triangles
+        and transformations on them, rendered in the same rendering engine as the rest of this assignment.
+
+
+		<h2>Barycentric coordinates (Task 4)</h2>
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
 		<h2>Task 5: "Pixel sampling" for texture mapping</h2>
