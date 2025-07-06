@@ -188,6 +188,38 @@
         positive inside the triangle, we can easily use the coordinates to map things onto the triangle, such as
         linearly interpolating colors or lighting effects defined only at vertexes across the whole triangle at every
         pixel. It can also be used for UV mapping of textures onto a model.
+        <br><br>
+        The implementation of interpolating vertex colors was not difficult. I reduced the three equations to two by
+        substituting \(\gamma = 1 - \alpha - \beta\), which yields
+        \[
+        \begin{bmatrix}
+        x_0 - x_2 & x_1 - x_2 \\
+        y_0 - y_2 & y_1 - y_2
+        \end{bmatrix}
+        \begin{bmatrix}
+        \alpha \\ \beta
+        \end{bmatrix}
+        =
+        \begin{bmatrix}
+        T_x - x_2 \\ T_y - y_2
+        \end{bmatrix}
+        \equiv
+        \begin{bmatrix}
+        y_1 - y_2 & -(x_1 - x_2) \\
+        -(y_0 - y_2) & x_0 - x_2
+        \end{bmatrix}
+        \begin{bmatrix}
+        T_x - x_2 \\ T_y - y_2
+        \end{bmatrix}
+        =
+        \begin{bmatrix}
+        \alpha \\ \beta
+        \end{bmatrix}
+        \]
+        The second equation is found by inverting the matrix. This gives us values of \(\alpha\) and \(\beta\) directly,
+        and with \(\gamma = 1 - \alpha - \beta\) gives \(\gamma\). Using the same bounding box technique, we can test if
+        each point is inside the triangle by checking \(\alpha, \beta, \gamma \ge 0\) and then interpolate by weighting
+        each vertex color's contribution with respect to their associated point's coefficient.
 
 
         <h2>"Pixel sampling" for texture mapping (Task 5)</h2>
