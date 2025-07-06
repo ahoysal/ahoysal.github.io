@@ -1,221 +1,265 @@
 <html>
-	<head>
-		<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=default'></script>
-		<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="../style.css">
-	</head>
-	<body>
-		<div class="container">
+
+<head>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=default'></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="../style.css">
+</head>
+
+<body>
+    <div class="container">
         <h1>Rasterization</h1>
-		<div style="text-align: center;">(CS184 Summer 2025 Homework 1 Write-Up)</div><br>
-		<div style="text-align: center;"> ~ Aagrim Hoysal ~</div>
+        <div style="text-align: center;">(CS184 Summer 2025 Homework 1 Write-Up)</div><br>
+        <div style="text-align: center;"> ~ Aagrim Hoysal ~</div>
         <div style="text-align: center;">
-            <a href="https://ahoysal.github.io/cs184/rasterization">Loop Link</a> | 
+            <a href="https://ahoysal.github.io/cs184/rasterization">Loop Link</a> |
             <a href="https://github.com/cal-cs184/hw-rasterizer-a-raster-master">GitHub Repo</a>
         </div>
 
-		<!--
+        <!--
 		We've already added one heading per task, to make your write-up as navigable when grading. Please fit your write-up within these sections!
 		-->
 
-		<h2>Overview</h2>
-		Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the homework.
+        <h2>Overview</h2>
+        Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole.
+        Share your thoughts on what interesting things you've learned from completing the homework.
 
-		<h2>Drawing Single-Color Triangles (Task 1)</h2>
-		To rasterize triangles, first find the bounding box by calculating the minimum and maximum X and Y coordinates.
-        This gives a box of canidate pixels to check. Round down on mins and round up on maxes to ensure that all possibile pixels are accounted for,
+        <h2>Drawing Single-Color Triangles (Task 1)</h2>
+        To rasterize triangles, first find the bounding box by calculating the minimum and maximum X and Y coordinates.
+        This gives a box of canidate pixels to check. Round down on mins and round up on maxes to ensure that all
+        possibile pixels are accounted for,
         since we will sample at (x+.5, y+.5). We can also bound the minimum and maximum by the screen coordinates now
-        so that we don't spend time on checking pixels out of the bounds of the screen, and we will never try to write to invalid coordinates.
+        so that we don't spend time on checking pixels out of the bounds of the screen, and we will never try to write
+        to invalid coordinates.
         <figure style="float: inline-end;">
-            <img src="images/part1.png" width="400px"/>
-			<figcaption>Screenshot of rendering of <i>basic/test4.svg</i></figcaption>
+            <img src="images/part1.png" width="400px" />
+            <figcaption>Screenshot of rendering of <i>basic/test4.svg</i></figcaption>
         </figure>
         <br><br>
         Next, iterate over the bounding box to check if (pixel position) + (0.5, 0.5) are in the triangle.
-        We check this by running three dot products on the sampling test point \(T\); 
+        We check this by running three dot products on the sampling test point \(T\);
         <ul>
             <li>\(\vec{p_0p_1} \cdot R_{CCW}(\vec{p_0T})\)</li>
             <li>\(\vec{p_1p_2} \cdot R_{CCW}(\vec{p_1T})\)</li>
             <li>\(\vec{p_2p_0} \cdot R_{CCW}(\vec{p_2T})\)</li>
         </ul>
-        \[R_{CCW} = \text{90° CCW rotation} = \begin{bmatrix} 0 & 1 \\ -1 & 0 \end{bmatrix}\] 
+        \[R_{CCW} = \text{90° CCW rotation} = \begin{bmatrix} 0 & 1 \\ -1 & 0 \end{bmatrix}\]
         For each dot product,
-        we check if their sign is the same (since we don't care about winding order). If the signs don't match (and the sign isn't
+        we check if their sign is the same (since we don't care about winding order). If the signs don't match (and the
+        sign isn't
         equal to 0) then the point is not in the triangle. If all three match or are zero, then we render that pixel as
         inside the triangle by filling it in.
         <br><br>
-        Initially, I tried creating Vector2's and doing dot products through CGL– this ended up being slower than writing out the dot
-        products by hand, as rotating the vectors took a while. Factoring out constant expressions in the dot product outside the loop
-        actually decreased performance, so I left in the full dot product expression. Factoring out a <code>sample_triangle()</code> function reduced
+        Initially, I tried creating Vector2's and doing dot products through CGL– this ended up being slower than
+        writing out the dot
+        products by hand, as rotating the vectors took a while. Factoring out constant expressions in the dot product
+        outside the loop
+        actually decreased performance, so I left in the full dot product expression. Factoring out a
+        <code>sample_triangle()</code> function reduced
         computation by 10-15 cycles, however.
-		
-		<h2>Antialiasing by Supersampling (Task 2)</h2>
-		Supersampling consisted of enlarging the sampling buffer, sampling at more points for each pixel, and averaging those samples.
-        I enlarged the sampling buffer proportionally to the sampling rate so that each pixel had additional space for the additional samples.
-        Then, when rasterizing each pixel, instead of writing only one value to the buffer, I wrote the sampling rate number of samples.
-        To do this, I picked evenly spaced sub-pixel points in a \(\sqrt{sampling~rate} \times \sqrt{sampling~rate}\) grid within the pixel to sample,
-        and put those in the buffer. Additionally, I formatted the buffer so that all samples corresponding to one pixel were contigious;
-        this allows for different sampling patterns, sampling rates that aren't perfect squares, and hopefully more cache hits, but doesn't lend itself
+
+        <h2>Antialiasing by Supersampling (Task 2)</h2>
+        Supersampling consisted of enlarging the sampling buffer, sampling at more points for each pixel, and averaging
+        those samples.
+        I enlarged the sampling buffer proportionally to the sampling rate so that each pixel had additional space for
+        the additional samples.
+        Then, when rasterizing each pixel, instead of writing only one value to the buffer, I wrote the sampling rate
+        number of samples.
+        To do this, I picked evenly spaced sub-pixel points in a \(\sqrt{sampling~rate} \times \sqrt{sampling~rate}\)
+        grid within the pixel to sample,
+        and put those in the buffer. Additionally, I formatted the buffer so that all samples corresponding to one pixel
+        were contigious;
+        this allows for different sampling patterns, sampling rates that aren't perfect squares, and hopefully more
+        cache hits, but doesn't lend itself
         to the "high res render then downsample" intuition.
         <br><br>
-        Averaging the pixels was just a matter of, for each pixel of the screen buffer, taking the associated samples and doing a uniform weighted average 
+        Averaging the pixels was just a matter of, for each pixel of the screen buffer, taking the associated samples
+        and doing a uniform weighted average
         of all the pixel colors, then pushing that to the screen buffer as the pixel's value.
         <br><br>
-        The supersampling helps to reduce jaggies and morie patterns by providing intermediate values instead of just on or off for each pixel.
-        In effect, high frequency data is filtered out by the multiple samples, which should average out the high frequencies past the nyquist within the pixel, 
+        The supersampling helps to reduce jaggies and morie patterns by providing intermediate values instead of just on
+        or off for each pixel.
+        In effect, high frequency data is filtered out by the multiple samples, which should average out the high
+        frequencies past the nyquist within the pixel,
         so that it isn't aliased as low frequency data, i.e a different shape with more jagged edges.
         <div style="display: flex; flex-direction: column; align-items: center;">
-			<table style="width: 100%; text-align: center; border-collapse: separate; border-spacing: 1em; ">
-			    <tr>
+            <table style="width: 100%; text-align: center; border-collapse: separate; border-spacing: 1em; ">
+                <tr>
                     <td style="text-align: center;">
-                        <img src="images/part2at1.png" width="300px"/>
+                        <img src="images/part2at1.png" width="300px" />
                         <figcaption>Sampling rate of 1. Notice the jaggies.</figcaption>
                     </td>
                     <td style="text-align: center;">
-                        <img src="images/part2at4.png" width="300px"/>
+                        <img src="images/part2at4.png" width="300px" />
                         <figcaption>Sampling rate of 4. Notice the four levels of redness.</figcaption>
                     </td>
                 </tr>
                 <tr>
                     <td style="text-align: center;">
-                        <img src="images/part2at9.png" width="300px"/>
+                        <img src="images/part2at9.png" width="300px" />
                         <figcaption>Sampling rate of 9. Notice the smoother gradient.</figcaption>
                     </td>
                     <td style="text-align: center;">
-                        <img src="images/part2at16.png" width="300px"/>
+                        <img src="images/part2at16.png" width="300px" />
                         <figcaption>Sampling rate of 16. Notice the diminishing returns.</figcaption>
                     </td>
-			    </tr>
+                </tr>
             </table>
         </div>
 
-		<h2>Transforms (Task 3)</h2>
-        Transforms are quite simple. We use homogenous coordinates (3x1) to be able to translate points, with a 1 in the lower right corner to signify a point and 0 for a vector.
+        <h2>Transforms (Task 3)</h2>
+        Transforms are quite simple. We use homogenous coordinates (3x1) to be able to translate points, with a 1 in the
+        lower right corner to signify a point and 0 for a vector.
         The matrix for translation looks like
 
         <figure style="float: inline-end;">
-            <img src="images/part3.png" width="300px"/>
-			<figcaption>It really suits them!</figcaption>
+            <img src="images/part3.png" width="300px" />
+            <figcaption>It really suits them!</figcaption>
         </figure>
 
         \[
-            \begin{bmatrix}
-                1 & 0 & t_x \\
-                0 & 1 & t_y \\
-                0 & 0 & 1
-            \end{bmatrix}
+        \begin{bmatrix}
+        1 & 0 & t_x \\
+        0 & 1 & t_y \\
+        0 & 0 & 1
+        \end{bmatrix}
         \]
-        The result of a matrix multiplication of a column vector that is a point (i.e 1 at the bottom) will be the same as the original column vector, plus \(t_x\) in the x axis
-        and \(t_y\) in the y axis because the last value in the column vector is 1. For a vector, a translation should have no effect; and in fact it doesn't, because
+        The result of a matrix multiplication of a column vector that is a point (i.e 1 at the bottom) will be the same
+        as the original column vector, plus \(t_x\) in the x axis
+        and \(t_y\) in the y axis because the last value in the column vector is 1. For a vector, a translation should
+        have no effect; and in fact it doesn't, because
         the final row being 0 cancels any translations that would have happened. Similarly, the matrix for scaling is
         \[
-            \begin{bmatrix}
-                s_x & 0 & 0 \\
-                0 & s_y & 0 \\
-                0 & 0 & 1
-            \end{bmatrix}
+        \begin{bmatrix}
+        s_x & 0 & 0 \\
+        0 & s_y & 0 \\
+        0 & 0 & 1
+        \end{bmatrix}
         \]
-        This only multiplies the x and y components of the column vector by \(s_x\) and \(s_y\). The matrix for rotation can be derived from rotating the basis vectors around,
+        This only multiplies the x and y components of the column vector by \(s_x\) and \(s_y\). The matrix for rotation
+        can be derived from rotating the basis vectors around,
         and can be represented as such:
         \[
-            \begin{bmatrix}
-                cos(rot) & sin(rot) & 0 \\
-                sin(rot) & -cos(rot) & 0 \\
-                0 & 0 & 1
-            \end{bmatrix}
+        \begin{bmatrix}
+        cos(rot) & sin(rot) & 0 \\
+        sin(rot) & -cos(rot) & 0 \\
+        0 & 0 & 1
+        \end{bmatrix}
         \]
-        Many images can be derived from translating, rotating, and scaling basic shapes. To demonstrate this, I have made a robot that is tidying their tie, composed of triangles
+        Many images can be derived from translating, rotating, and scaling basic shapes. To demonstrate this, I have
+        made a robot that is tidying their tie, composed of triangles
         and transformations on them, rendered in the same rendering engine as the rest of this assignment.
 
 
-		<h2>Barycentric coordinates (Task 4)</h2>
+        <h2>Barycentric coordinates (Task 4)</h2>
         <figure style="float: inline-end;">
             <img src="images/part4circle.png" width="300px">
             <figcaption>Screenshot of rendering of <i>basic/test7.svg</i></figcaption>
             <br>
             <img src="images/part4triangle.png" width="300px">
-            <figcaption>Example of barycentric coordinates <br> to interpolate colors at vertexes.<br>Notice the smooth gradient.</figcaption>
+            <figcaption>Example of barycentric coordinates <br> to interpolate colors at vertexes.<br>Notice the smooth
+                gradient.</figcaption>
         </figure>
-		Barycentric coordinates are a way to convert cartesian coordinates into a linear combination of the three points of the triangle, while maintaining that 
+        Barycentric coordinates are a way to convert cartesian coordinates into a linear combination of the three points
+        of the triangle, while maintaining that
         the sum of three weightings equal 1. More mathematically, they provide \(\alpha, \beta, \gamma\) such that
-        \[ 
-            \begin{equation}
-                \begin{cases}
-                \alpha p_0 + \beta p_1 + \gamma p_2 = T \\
-                \alpha + \beta + \gamma = 1
-                \end{cases}
-            \end{equation}
-            \equiv
-            \begin{bmatrix}
-                x_0 & x_1 & x_2 \\
-                y_0 & y_1 & y_2 \\
-                1 & 1 & 1
-            \end{bmatrix}
-            \begin{bmatrix}
-                \alpha \\ \beta \\ \gamma
-            \end{bmatrix}
-            =
-            \begin{bmatrix}
-                T_x \\ T_y \\ 1
-            \end{bmatrix}
+        \[
+        \begin{equation}
+        \begin{cases}
+        \alpha p_0 + \beta p_1 + \gamma p_2 = T \\
+        \alpha + \beta + \gamma = 1
+        \end{cases}
+        \end{equation}
+        \equiv
+        \begin{bmatrix}
+        x_0 & x_1 & x_2 \\
+        y_0 & y_1 & y_2 \\
+        1 & 1 & 1
+        \end{bmatrix}
+        \begin{bmatrix}
+        \alpha \\ \beta \\ \gamma
+        \end{bmatrix}
+        =
+        \begin{bmatrix}
+        T_x \\ T_y \\ 1
+        \end{bmatrix}
         \]
-        We can prove that when \(\alpha, \beta, \gamma \ge 0\), then T lies within or on the triangle. The barycentric coordinates are a weighted average of the three points,
-        so without loss of generality between which two of three points are chosen, pick two points on the triangle. The points that exist on the line connecting the two are 
-        some weighted average of both points, lets say \(\alpha\) and \(\beta\). Then \(\alpha + \beta = 1\), basically an interpolation between the first and second point
-        without any influence of the third point. If \(\gamma > 0\), that point moves toward the third point; then if \(\gamma < 0\), 
-        the point is displaced away from the third point, and is on the "wrong side" of the line connecting the first two points; it is definitely not in the triangle. 
-        By symmetry, if the point is on the "wrong side" of any of the three combinations, it is not in the triangle, and conversely if it is on the "right side" of 
-        all of the lines, it is inside the triangle.
-        <br><br>
-        Because barycentric coordinates are defined as a weighted average of the three points where all weights are positive inside the triangle, we can easily use the coordinates
-        to map things onto the triangle, such as linearly interpolating colors or lighting effects defined only at vertexes across the whole triangle at every pixel. It can also be
+        We can prove that when \(\alpha, \beta, \gamma \ge 0\), then T lies within or on the triangle. The barycentric
+        coordinates are a weighted average of the three points,
+        so without loss of generality between which two of three points are chosen, pick two points on the triangle. The
+        points that exist on the line connecting the two are
+        some weighted average of both points, lets say \(\alpha\) and \(\beta\). Then \(\alpha + \beta = 1\), basically
+        an interpolation between the first and second point
+        without any influence of the third point. If \(\gamma > 0\), that point moves toward the third point; then if
+        \(\gamma < 0\), the point is displaced away from the third point, and is on the "wrong side" of the line
+        connecting the first two points; it is definitely not in the triangle. By symmetry, if the point is on
+        the "wrong side" of any of the three combinations, it is not in the triangle, and conversely if it is on
+        the "right side" of all of the lines, it is inside the triangle. <br><br>
+        Because barycentric coordinates are defined as a weighted average of the three points where all weights are
+        positive inside the triangle, we can easily use the coordinates
+        to map things onto the triangle, such as linearly interpolating colors or lighting effects defined only at
+        vertexes across the whole triangle at every pixel. It can also be
         used for UV mapping of textures onto a model.
 
 
-		<h2>Task 5: "Pixel sampling" for texture mapping</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+        <h2>"Pixel sampling" for texture mapping (Task 5)</h2>
 
-		<h2>Task 6: "Level Sampling" with mipmaps for texture mapping</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+        Texture mapping takes a triangle made up of pixels in screenspace and assigns each pixel a value based on a
+        texture.
 
-		<h2>(Optional) Task 7: Extra Credit - Draw Something Creative!</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+        <h2>Task 6: "Level Sampling" with mipmaps for texture mapping</h2>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
+        dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex
+        ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat
+        nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit
+        anim id est laborum.
 
-		<h2>Additional Notes (please remove)</h2>
-		<ul>
-			<li>You can also add code if you'd like as so: <code>code code code</code></li>
-			<li>If you'd like to add math equations, 
-				<ul>
-					<li>You can write inline equations like so: \( a^2 + b^2 = c^2 \)</li>
-					<li>You can write display equations like so: \[ a^2 + b^2 = c^2 \]</li>
-				</ul>
-			</li>
-		</ul>
-        <p>Here is an example 2x2 gridlike structure using an HTML table. Each <b>tr</b> is a row and each <b>td</b> is a column in that row. You might find this useful for framing and showing your result images in an organized fashion.</p>
-		<div style="display: flex; flex-direction: column; align-items: center;">
-			<table style="width: 100%; text-align: center; border-collapse: collapse;">
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="lion.jpg" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="lion.jpg" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-			  </tr>
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="lion.jpg" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="lion.jpg" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-			  </tr>
-			</table>
-		</div>
-		</div>
-	</body>
+        <h2>(Optional) Task 7: Extra Credit - Draw Something Creative!</h2>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
+        dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex
+        ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat
+        nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit
+        anim id est laborum.
+
+        <h2>Additional Notes (please remove)</h2>
+        <ul>
+            <li>You can also add code if you'd like as so: <code>code code code</code></li>
+            <li>If you'd like to add math equations,
+                <ul>
+                    <li>You can write inline equations like so: \( a^2 + b^2 = c^2 \)</li>
+                    <li>You can write display equations like so: \[ a^2 + b^2 = c^2 \]</li>
+                </ul>
+            </li>
+        </ul>
+        <p>Here is an example 2x2 gridlike structure using an HTML table. Each <b>tr</b> is a row and each <b>td</b>
+            is a column in that row. You might find this useful for framing and showing your result images in an
+            organized fashion.</p>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table style="width: 100%; text-align: center; border-collapse: collapse;">
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="lion.jpg" width="400px" />
+                        <figcaption>Caption goes here.</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="lion.jpg" width="400px" />
+                        <figcaption>Caption goes here.</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="lion.jpg" width="400px" />
+                        <figcaption>Caption goes here.</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="lion.jpg" width="400px" />
+                        <figcaption>Caption goes here.</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</body>
+
 </html>
