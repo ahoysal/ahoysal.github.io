@@ -95,7 +95,7 @@
 
         <figure style="float: inline-end;">
             <img src="images/part3.png" width="300px"/>
-			<figcaption>It really suits him!</figcaption>
+			<figcaption>It really suits them!</figcaption>
         </figure>
 
         \[
@@ -129,7 +129,48 @@
 
 
 		<h2>Barycentric coordinates (Task 4)</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+        <figure style="float: inline-end;">
+            <img src="images/part4circle.png" width="300px">
+            <figcaption>Screenshot of rendering of <i>basic/test7.svg</i></figcaption>
+            <br>
+            <img src="images/part4triangle.png" width="300px">
+            <figcaption>Example of barycentric coordinates <br> to interpolate colors at vertexes.<br>Notice the smooth gradient.</figcaption>
+        </figure>
+		Barycentric coordinates are a way to convert cartesian coordinates into a linear combination of the three points of the triangle, while maintaining that 
+        the sum of three weightings equal 1. More mathematically, they provide \(\alpha, \beta, \gamma\) such that
+        \[ 
+            \begin{equation}
+                \begin{cases}
+                \alpha p_0 + \beta p_1 + \gamma p_2 = T \\
+                \alpha + \beta + \gamma = 1
+                \end{cases}
+            \end{equation}
+            \equiv
+            \begin{bmatrix}
+                x_0 & x_1 & x_2 \\
+                y_0 & y_1 & y_2 \\
+                1 & 1 & 1
+            \end{bmatrix}
+            \begin{bmatrix}
+                \alpha \\ \beta \\ \gamma
+            \end{bmatrix}
+            =
+            \begin{bmatrix}
+                T_x \\ T_y \\ 1
+            \end{bmatrix}
+        \]
+        We can prove that when \(\alpha, \beta, \gamma \ge 0\), then T lies within or on the triangle. The barycentric coordinates are a weighted average of the three points,
+        so without loss of generality between which two of three points are chosen, pick two points on the triangle. The points that exist on the line connecting the two are 
+        some weighted average of both points, lets say \(\alpha\) and \(\beta\). Then \(\alpha + \beta = 1\), basically an interpolation between the first and second point
+        without any influence of the third point. If \(\gamma > 0\), that point moves toward the third point; then if \(\gamma < 0\), 
+        the point is displaced away from the third point, and is on the "wrong side" of the line connecting the first two points; it is definitely not in the triangle. 
+        By symmetry, if the point is on the "wrong side" of any of the three combinations, it is not in the triangle, and conversely if it is on the "right side" of 
+        all of the lines, it is inside the triangle.
+        <br><br>
+        Because barycentric coordinates are defined as a weighted average of the three points where all weights are positive inside the triangle, we can easily use the coordinates
+        to map things onto the triangle, such as linearly interpolating colors or lighting effects defined only at vertexes across the whole triangle at every pixel. It can also be
+        used for UV mapping of textures onto a model.
+
 
 		<h2>Task 5: "Pixel sampling" for texture mapping</h2>
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
