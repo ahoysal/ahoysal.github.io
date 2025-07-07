@@ -13,8 +13,8 @@
         <div style="text-align: center;">(CS184 Summer 2025 Homework 1 Write-Up)</div><br>
         <div style="text-align: center;"> ~ Aagrim Hoysal ~</div>
         <div style="text-align: center;">
-            <a href="https://ahoysal.github.io/cs184/rasterization">Loop Link</a> |
-            <a href="https://github.com/cal-cs184/hw-rasterizer-a-raster-master">GitHub Repo</a>
+            <a href="https://ahoysal.github.io/cs184/rasterization" target="_blank">Loop Link</a> |
+            <a href="https://github.com/cal-cs184/hw-rasterizer-a-raster-master" target="_blank">GitHub Repo</a>
         </div>
 
         <!--
@@ -222,7 +222,7 @@
         each vertex color's contribution with respect to their associated point's coefficient.
 
 
-        <h2>"Pixel sampling" for texture mapping (Task 5)</h2>
+        <h2 id="part5">"Pixel sampling" for texture mapping (Task 5)</h2>
 
         Texture mapping takes a triangle in screenspace, a corresponding point in texture space for each triangle
         vertex, and the texture itself. It then spits out, for each pixel in the triangle, a sampled point from texture
@@ -280,12 +280,43 @@
         the neighborhood and will interpolate to get rid of some of the artifacts.
 
 
-        <h2>Task 6: "Level Sampling" with mipmaps for texture mapping</h2>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
-        dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex
-        ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat
-        nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit
-        anim id est laborum.
+        <h2>"Level Sampling" with mipmaps for texture mapping (Task 6)</h2>
+        Mipmaps are a way to precompute minified textures, making it faster than supersampling. This is done by level
+        sampling, i.e computing how close together pixel samples are and choosing an appropriatley (precomputed)
+        downsampled texture to make sure the highest frequency is below the nyquist frequency. With this, you can choose
+        either to always sample at full resolution (not using mipmaps at all), sample the closest mipmap level, or
+        interpolate between the two closest mipmap levels.
+        <h3>Mipmap implementation</h3>
+        Implementing mipmapping requires a) precomputing the downsampled texture levels, b) figuring out which
+        downsampling level is needed, and c) potentially interpolating samples from two different mipmap levels.
+        Precomputing downsampled textures consists of taking each texture and halving the resolution in each direction
+        so the next image is one fourth the size. This is done recursivley until the downsampled image is only one
+        pixel, and all the images are stored alongside the original texture. The original image is stored as level 0,
+        the one fourth sized image as level 1, one sixteenth as level 2, etc.
+        <br><br>
+        When figuring out the downsampling level, we approximate the distance between samples by checking where the
+        pixels below and to the right of the original would sample in texture space. The distance in texture space is
+        then used as an approximation of distance. Intuitivley, if the next pixel sample would be two texels away on the
+        original texture, we should use the level 1 texture, as our samples would "skip" one texel in level 0 (therefore
+        possibily aliasing) but hit all the texels in level 1 which have prefiltered the aliasing frequencies out.
+        Similarly if the next sample was 4 texels away, level 2 would be most appropriate. Through this we can derive
+        that for sample \(s\), the corresponding \(L\) is
+        \[
+        L = \log_2(
+        \max(
+        \text{dist}(\text{uv}(s), \text{uv}(s_{x+1})), ~
+        \text{dist}(\text{uv}(s), \text{uv}(s_{y+1}))
+        )
+        )
+        \]
+        where the function \(\text{uv}\) returns the level 0 texel coordinates of the interpolated UV at the sampled
+        pixel. This also needs to be clamped between 0 and the max mipmap level.
+        <br><br>
+        Finally, we can sample from the desired mipmap level. We can either just round the level to the nearest, or do
+        an interpolation <i>between</i> the two closest levels weighted by proximity. This is done by simply sampling
+        the integer levels above and below the floating point computed level using either nearest or bilinear as
+        described in <a href="#part5">part 5</a>, then interpolating the two colors based on the fractional component.
+        <h3>Sampling tradeoffs</h3>
 
         <h2>(Optional) Task 7: Extra Credit - Draw Something Creative!</h2>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
@@ -333,5 +364,9 @@
         </div>
     </div>
 </body>
+<footer>
+    Webpage based off <a href="https://github.com/cal-cs184/hw-webpage" target="_blank">CS 184 homework write up
+        template</a>
+</footer>
 
 </html>
