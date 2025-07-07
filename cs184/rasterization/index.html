@@ -69,7 +69,7 @@
         and doing a uniform weighted average of all the pixel colors, then pushing that to the screen buffer as the
         pixel's value.
         <br><br>
-        The supersampling helps to reduce jaggies and morie patterns by providing intermediate values instead of just on
+        The supersampling helps to reduce jaggies and moire patterns by providing intermediate values instead of just on
         or off for each pixel. In effect, high frequency data is filtered out by the multiple samples, which should
         average out the high frequencies past the nyquist within the pixel, so that it isn't aliased as low frequency
         data, i.e a different shape with more jagged edges.
@@ -275,7 +275,7 @@
         <br><br>
         Generally, there will be a large difference between nearest and bilinear when the sampled texture region is much
         larger than the region of pixels. This causes the texture to be sampled at a low frequency when there may be a
-        lot of high frequency data, causing morie patterns and jaggies from aliasing. Nearest will perform badly on such
+        lot of high frequency data, causing moire patterns and jaggies from aliasing. Nearest will perform badly on such
         textures because it will pick up those higher frequencies, while bilinear will perform better as it considers
         the neighborhood and will interpolate to get rid of some of the artifacts.
 
@@ -317,7 +317,66 @@
         the integer levels above and below the floating point computed level using either nearest or bilinear as
         described in <a href="#part5">part 5</a>, then interpolating the two colors based on the fractional component.
         <h3>Sampling tradeoffs</h3>
+        The below table compares each sampling technique individually to nearest pixel, no mipmaps, no supersampling.
+        <br><br>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table class="table-text" style="width: 100%;">
+                <tr style="align-items: center; text-align: center;">
+                    <td></td>
+                    <td>Supersampling</td>
+                    <td>Pixel sampling (bilinear)</td>
+                    <td>Level sampling</td>
+                </tr>
+                <tr>
+                    <td>Compute</td>
+                    <td class="table-bad">Quite costly, proportional to the number of samples</td>
+                    <td class="table-ok">Less costly, 4x samples for each corner and three lerps</td>
+                    <td class="table-good">Inexpensive, 1x lookup (2x if linear levels)</td>
+                </tr>
+                <tr>
+                    <td>Memory</td>
+                    <td class="table-bad">Sample buffer size grows proportional to number of samples</td>
+                    <td class="table-good">Almost no extra space needed</td>
+                    <td class="table-ok">Every texture takes x4/3 the space</td>
+                </tr>
+                <tr>
+                    <td>Antialias effectivness</td>
+                    <td class="table-good">Very effective</td>
+                    <td class="table-mix">Helps most with magnification, more limited with minification</td>
+                    <td class="table-mix">Helps most with minification, little to no help with magnification</td>
+                </tr>
+            </table>
+        </div>
+        <br>
+        <h3>And finally... a cross section of the final product.</h3>
 
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table style="width: 100%; text-align: center; border-collapse: separate; border-spacing: 1em; ">
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="images/part6l0pn.png" width="300px" />
+                        <figcaption>Level 0<br>Nearest texture sample</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="images/part6l0pl.png" width="300px" />
+                        <figcaption>Level 0<br>Bilinear texture sample</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="images/part6lnpn.png" width="300px" />
+                        <figcaption>Nearest level<br>Nearest texture sample</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="images/part6lnpl.png" width="300px" />
+                        <figcaption>Nearest level<br>Bilinear texture sample</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <br>
+        
+        <!--
         <h2>(Optional) Task 7: Extra Credit - Draw Something Creative!</h2>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
         dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex
@@ -363,6 +422,7 @@
             </table>
         </div>
     </div>
+    -->
 </body>
 <footer>
     Webpage based off <a href="https://github.com/cal-cs184/hw-webpage" target="_blank">CS 184 homework write up

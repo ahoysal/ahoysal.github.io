@@ -16,6 +16,28 @@ img {
     display: inline-block;
 }
 
+.table-text > tbody > tr > td, .table-text > tbody > tr, .table-text {
+    border: 1px solid #efe0bc;
+    border-collapse: collapse;
+    padding: 0.3em;
+}
+
+.table-bad {
+    background-color: #700606;
+}
+
+.table-ok {
+    background-color: #949200;
+}
+
+.table-mix {
+    background-color: #850094;
+}
+
+.table-good {
+    background-color: #237505;
+}
+
 a {
     color: #f0c561;
 }
