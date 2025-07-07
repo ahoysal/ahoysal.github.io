@@ -224,11 +224,60 @@
 
         <h2>"Pixel sampling" for texture mapping (Task 5)</h2>
 
-        Pixel sampling is taking a signal and discretizing it so that it can be displayed by a discrete display like the
-        screen. For example, texture mapping takes a triangle in screenspace, a corresponding point in texture space for
-        each triangle vertex, and the texture itself. It then spits out, for each pixel in the triangle, a sampled point
-        from texture space, interpolating such that the screenspace image looks close to if the corresponding texture
-        triangle was stretched to fit the screenspace triangle.
+        Texture mapping takes a triangle in screenspace, a corresponding point in texture space for each triangle
+        vertex, and the texture itself. It then spits out, for each pixel in the triangle, a sampled point from texture
+        space, interpolating such that the screenspace image looks close to if the corresponding texture triangle was
+        stretched to fit the screenspace triangle.
+        <br><br>
+        Using barycentric coordinates, we can interpolate the coordinates in texture space ("UVs") based on how close
+        they are to each of the screenspace vertexes. However, because pixels will not match up with texels (texture
+        space pixels), we need to be able to sample the texture at points and get back one color value– pixel sampling.
+        Two different pixel sampling methods implemented here are nearest and bilinear. Nearest just takes the closest
+        texel and assigns it to the screen space pixel. Bilinear takes the square surrounding the UV and interpolates
+        between them all– first finding out the color interpolated between the left side depending on how close the UV
+        is to each vertically, then the same for the right two pixels, and finally between the left interpolated color
+        and right interpolated color based on the percentage of the way the UV is between the left and right.
+        <br>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table style="width: 100%; text-align: center; border-collapse: separate; border-spacing: 1em; ">
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="images/part5n1.png" width="300px" />
+                        <figcaption>Nearest @ 1 sample/pixel.<br></figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="images/part5b1.png" width="300px" />
+                        <figcaption>Bilinear @ 1 sample/pixel.<br></figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="images/part5n16.png" width="300px" />
+                        <figcaption>Nearest @ 16 samples/pixel.<br></figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="images/part5b16.png" width="300px" />
+                        <figcaption>Bilinear @ 16 samples/pixel.<br></figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        The above table contains a few different settings. Nearest @ 1 sample/pixel samples high frequency noise a lot,
+        resulting in lots of jaggies; there aren't enough pixels to discern all the detail inside the bell tower, so we
+        get snippets of the high frequency noise that alias as other shapes. Bilinear sampling helps allieviate this a
+        little through looking at two different points. This causes some high frequency noise (contained in \(\le\) one
+        texel) to get averaged out, but even then not all pixels have contribution to the image because of how the image
+        is distorted. Nearest @ 16 samples/pixel samples a lot more pixels and averages them out, in effect performing a
+        more coarse version of bilinear filtering by not considering interpolation based on location but instead flat
+        weighting a spattering of samples within the triangle, eliminating the most prominent jaggies. Bilinear @ 16
+        samples/pixel is the most extreme version of this, sampling many texels per pixel while also interpolating
+        between them, getting rid of a lot of the low frequency noise that might have been aliased as something else.
+        <br><br>
+        Generally, there will be a large difference between nearest and bilinear when the sampled texture region is much
+        larger than the region of pixels. This causes the texture to be sampled at a low frequency when there may be a
+        lot of high frequency data, causing morie patterns and jaggies from aliasing. Nearest will perform badly on such
+        textures because it will pick up those higher frequencies, while bilinear will perform better as it considers
+        the neighborhood and will interpolate to get rid of some of the artifacts.
 
 
         <h2>Task 6: "Level Sampling" with mipmaps for texture mapping</h2>
