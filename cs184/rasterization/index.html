@@ -26,14 +26,14 @@
         screen to UV mapping and texturing with various anti-aliasing methods. Before this, my digital art experience
         had mostly been 2D pixel art, so this project has helped me understand why I click "nearest" instead of "linear"
         when making pixel art. Jokes aside, it explained a lot of the interesting intricacies of how images are
-        rendered, and what techniques are used to remove artifacts from distortion– whether that distorition is scaling,
-        rotating, translating, sheering, or even just taking a continous signal and trying to fit it on a discrete
+        rendered, and what techniques are used to remove artifacts from distortion– whether that distortion is scaling,
+        rotating, translating, sheering, or even just taking a continuous signal and trying to fit it on a discrete
         finite screen.
 
         <h2>Drawing Single-Color Triangles (Task 1)</h2>
         To rasterize triangles, first find the bounding box by calculating the minimum and maximum X and Y coordinates.
-        This gives a box of canidate pixels to check. Round down on mins and round up on maxes to ensure that all
-        possibile pixels are accounted for, since we will sample at (x+.5, y+.5). We can also bound the minimum and
+        This gives a box of candidate pixels to check. Round down on mins and round up on maxes to ensure that all
+        possible pixels are accounted for, since we will sample at (x+.5, y+.5). We can also bound the minimum and
         maximum by the screen coordinates now
         so that we don't spend time on checking pixels out of the bounds of the screen, and we will never try to write
         to invalid coordinates.
@@ -67,7 +67,7 @@
         value to the buffer, I wrote the sampling rate number of samples. To do this, I picked evenly spaced sub-pixel
         points in a \(\sqrt{sampling~rate} \times \sqrt{sampling~rate}\) grid within the pixel to sample, and put those
         in the buffer. Additionally, I formatted the buffer so that all samples corresponding to one pixel were
-        contigious; this allows for different sampling patterns, sampling rates that aren't perfect squares, and
+        contiguous; this allows for different sampling patterns, sampling rates that aren't perfect squares, and
         hopefully more cache hits, but doesn't lend itself to the "high res render then downsample" intuition.
         <br><br>
         Averaging the pixels was just a matter of, for each pixel of the screen buffer, taking the associated samples
@@ -102,6 +102,47 @@
                 </tr>
             </table>
         </div>
+
+        <h3><s>Random</s> <i>Low-discrepancy</i> aside: Other supersampling methods (Task 2 EC)</h3>
+
+        Instead of supersampling in a rigid grid, why not use another pattern? Grids might miss intersections; what if
+        a triangle passes right in between because it runs straight up and down, right past all the grid points?
+        Low-discrepancy sampling helps solve this. Low-discrepancy patterns have some properties of random numbers, but
+        guarantee that there are an equal distribution of points in every range as it goes to infinity. If we use a
+        low-discrepancy pattern in \(\mathbb{R}^2\), we can sample in a quasirandom way while still sampling evenly!
+        <br><br>
+        One low-discrepancy way to find points in a unit square that we can use to choose our samples is <a
+            href="https://lavalle.pl/planning/node210.html">the Halton Sequence</a>. By flipping the digits in \([1,
+        k]\) across the decimal point in \(n\) coprime base representations, we can get \(k\) points in
+        \(\mathbb{R}^n\) that are distributed in a low-discrepancy way. We can precompute these with coprimes 2 and 3,
+        then use the sampling frequency to determine how many points from the Halton Sequence we take, then sample with
+        that pattern. This avoids some artifacts from potential misses due to the regularity of grids.
+
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table style="width: 100%; text-align: center; border-collapse: separate; border-spacing: 1em; ">
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="images/ecnh4.png" width="300px" />
+                        <figcaption>Grid sampling at 4 samples/px.<br>Notice the disconnect.</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="images/ecnh16.png" width="300px" />
+                        <figcaption>Grid sampling at 16 samples/px.<br>Notice the disconnect.</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="images/ech4.png" width="300px" />
+                        <figcaption>Using halton to sample at 4 samples/px.<br>Notice how it's much more continuous.</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="images/ech16.png" width="300px" />
+                        <figcaption>Using halton to sample at 16 samples/px.<br>Notice how it's continuous.</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
 
         <h2>Transforms (Task 3)</h2>
         Transforms are quite simple. We use homogenous coordinates (3x1) to be able to translate points, with a 1 in the
@@ -287,7 +328,7 @@
 
         <h2>"Level Sampling" with mipmaps for texture mapping (Task 6)</h2>
         Mipmaps are a way to precompute minified textures, making it faster than supersampling. This is done by level
-        sampling, i.e computing how close together pixel samples are and choosing an appropriatley (precomputed)
+        sampling, i.e computing how close together pixel samples are and choosing an appropriately (precomputed)
         downsampled texture to make sure the highest frequency is below the nyquist frequency. With this, you can choose
         either to always sample at full resolution (not using mipmaps at all), sample the closest mipmap level, or
         interpolate between the two closest mipmap levels.
@@ -295,15 +336,15 @@
         Implementing mipmapping requires a) precomputing the downsampled texture levels, b) figuring out which
         downsampling level is needed, and c) potentially interpolating samples from two different mipmap levels.
         Precomputing downsampled textures consists of taking each texture and halving the resolution in each direction
-        so the next image is one fourth the size. This is done recursivley until the downsampled image is only one
+        so the next image is one fourth the size. This is done recursively until the downsampled image is only one
         pixel, and all the images are stored alongside the original texture. The original image is stored as level 0,
         the one fourth sized image as level 1, one sixteenth as level 2, etc.
         <br><br>
         When figuring out the downsampling level, we approximate the distance between samples by checking where the
         pixels below and to the right of the original would sample in texture space. The distance in texture space is
-        then used as an approximation of distance. Intuitivley, if the next pixel sample would be two texels away on the
+        then used as an approximation of distance. Intuitively, if the next pixel sample would be two texels away on the
         original texture, we should use the level 1 texture, as our samples would "skip" one texel in level 0 (therefore
-        possibily aliasing) but hit all the texels in level 1 which have prefiltered the aliasing frequencies out.
+        possibly aliasing) but hit all the texels in level 1 which have prefiltered the aliasing frequencies out.
         Similarly if the next sample was 4 texels away, level 2 would be most appropriate. Through this we can derive
         that for sample \(s\), the corresponding \(L\) is
         \[
@@ -345,7 +386,7 @@
                     <td class="table-ok">Every texture takes x4/3 the space</td>
                 </tr>
                 <tr>
-                    <td>Antialias effectivness</td>
+                    <td>Antialias effectiveness</td>
                     <td class="table-good">Very effective</td>
                     <td class="table-mix">Helps most with magnification, more limited with minification</td>
                     <td class="table-mix">Helps most with minification, little to no help with magnification</td>
