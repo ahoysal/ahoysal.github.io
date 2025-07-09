@@ -291,7 +291,7 @@
         downsampled texture to make sure the highest frequency is below the nyquist frequency. With this, you can choose
         either to always sample at full resolution (not using mipmaps at all), sample the closest mipmap level, or
         interpolate between the two closest mipmap levels.
-        <h3>Mipmap implementation</h3>
+        <h3 id="mipmap">Mipmap implementation</h3>
         Implementing mipmapping requires a) precomputing the downsampled texture levels, b) figuring out which
         downsampling level is needed, and c) potentially interpolating samples from two different mipmap levels.
         Precomputing downsampled textures consists of taking each texture and halving the resolution in each direction
@@ -379,7 +379,68 @@
                 </tr>
             </table>
         </div>
+
+        <h3>A little extra: Anisotropic filtering (Task 6 EC)</h3>
+
+        Anisotropic filtering tries to solve the same problems as mipmaps, but with seperate filtering mechanisms that
+        take into account the change in UV horizontally and vertically separately. I implemented an anisotropic
+        filtering system through summed area tables, which allows for efficient area integration of arbitrary areas by
+        precomputing the sum of the lower rectangle bounded by (0,0) and all points in the image. This can then be used
+        by subtracting the sum of the corners on the main diagonal (low x low y and high x high y) from the secondary
+        diagonal's points. Then by dividing by the area, we get the average value on the rectangle. If we do this for
+        the red, green, and blue channels, we get a rectangular filter of dynamic size for a constant four samples!
+        <br><br>
+        Now all we need is to find the size of the rectangular filter per pixel. We can then use the same approximation
+        of how stretched the UV is based on where the UV of two neighboring pixels end up, used <a
+            href="#mipmap">earlier</a>. Then we apply the following steps, assuming \(UV_{x+1}\) is the vector from the
+        original UV to the UV corresponding to pixel (x+1, y), and similarly for \(UV_{y+1}\):
+        <ol>
+            <li>Calculate the area of the parallelogram with edges \(UV_{x+1}\) and \(UV_{y+1}\) by computing the cross
+                product. This will let us figure out the "true" area that is getting sampled per pixel in texture space.
+            </li>
+            <li>Find the bounding box size of \(UV_{x+1}\) and \(UV_{y+1}\) with axis aligned sides.
+                Because we must perform all our operations axis aligned, this transforms our skewed UVs into something
+                we can work with on the texel level.</li>
+            <li>Scale the bounding box so it has the same area as the "true" area of the original parallelogram. An easy
+                way to do this is, for bounding box of side length \((u, v)\) and a "true" area \(A\), find \(m\) such
+                that \((m\cdot u)\cdot (m\cdot v) = A\), and set \((u,v) := m\cdot (u,v)\). This makes sure we are
+                filtering the same area
+                we would have if we had an axis aligned \(UV_{x+1}\) and \(UV_{y+1}\) originally, and thus antialias the
+                same (since the sampling rate is the same regardless of skew).</li>
+            <li>Center the bounding box on the original \(UV\) and calculate the summed area using the table with a
+                minimum size of a one pixel wide bounding box. Divide by area to get the average color in that area.
+            </li>
+        </ol>
+        This gets you pretty good results; its about halfway between bilinear and trilinear in terms of quality most of
+        the time, for around the cost of a bilinear.
         <br>
+
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table style="width: 100%; text-align: center; border-collapse: separate; border-spacing: 1em; ">
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="images/ecnearr.png" width="300px" />
+                        <figcaption>Level 0<br>Nearest texture sample<br>~3400 cycles</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="images/ecbii.png" width="300px" />
+                        <figcaption>Level 0<br>Bilinear texture sample<br>~5500 cycles</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="images/ectrii.png" width="300px" />
+                        <figcaption>Trilinear sampling<br>~12000 cycles</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="images/ecsatt.png" width="300px" />
+                        <figcaption>Anisotropic sampling<br>~5900 cycles</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <br><br>
 
         <!--
         <h2>(Optional) Task 7: Extra Credit - Draw Something Creative!</h2>
