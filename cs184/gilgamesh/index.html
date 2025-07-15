@@ -44,7 +44,8 @@
         and there were no more edges to interpolate.
         <br><br>
         Below is a table displaying de Casteljau's algorithm for a 5th degree bezier curve with 6 control points at each
-        step of interpolation, with the newest edges and points in red. Typically bezier curves for graphics tend to be cubic beziers strung together, but the
+        step of interpolation, with the newest edges and points in red. Typically bezier curves for graphics tend to be
+        cubic beziers strung together, but the
         same algorithm works for any number of points greater than two. Notice how the number of points and edges
         decreases by one at each step. The final image shows the final curve, which is the parametric function defined
         by de Casteljau's from \(0 \leq t \leq 1\).
@@ -97,14 +98,27 @@
         <br>
         Additionally, here is an animated version of the last step of a different curve at various t values.
         <br><br>
-        <img src="images/bezier.gif" width="50%" class="center"/>
+        <img src="images/bezier.gif" width="50%" class="center" />
 
         <h3>Part 2: Bezier surfaces with separable 1D de Casteljau</h3>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
-        magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-        consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-        pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est
-        laborum.
+
+        <figure style="float: inline-end;">
+            <img src="images/bezTeapot.png" width="300px" />
+            <figcaption>Teapot generated from bezier surface.<br>Triangles were generated from<br>sampling the bezier surface.</figcaption>
+        </figure>
+
+        Bezier surfaces in 3D are defined by \(n \times n\) 3D points, with interpolation over two parameters, \(u\) and
+        \(v\), ranging between zero and one. Extending de Casteljau’s algorithm to surfaces is simply a matter of
+        evaluating the same algorithm as a curve at \(t = u\) on each row. This gives us one point per row, giving a
+        total of \(n\) points. We can then feed the \(n\) resulting points into de Casteljau’s algorithm for a curve
+        again, with \(t = v\), giving us a single point. In total, letting \(0 \leq u, v \leq 1\) defines the parametric
+        surface of the bezier surface.
+
+        <br><br>
+
+        Implementing 3D bezier surfaces requires almost no modification from the 2D algorithm except using 3D points to
+        interpolate between, running the original algorithm \(n\) times along the rows with \(t = u\), and running the
+        original algorithm one more time on the output of the \(n\) rows with \(t = v\).
 
         <h2>Section II: Triangle Meshes and Half-Edge Data Structure</h2>
 
