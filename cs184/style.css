@@ -16,6 +16,13 @@ img {
     display: inline-block;
 }
 
+.center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 50%;
+}
+
 .table-text > tbody > tr > td, .table-text > tbody > tr, .table-text {
     border: 1px solid #efe0bc;
     border-collapse: collapse;
