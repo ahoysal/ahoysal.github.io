@@ -104,13 +104,14 @@
 
         <figure style="float: inline-end;">
             <img src="images/bezTeapot.png" width="300px" />
-            <figcaption>Teapot generated from bezier surface.<br>Triangles were generated from<br>sampling the bezier surface.</figcaption>
+            <figcaption>Teapot generated from bezier surface.<br>Triangles were generated from<br>sampling the bezier
+                surface.</figcaption>
         </figure>
 
         Bezier surfaces in 3D are defined by \(n \times n\) 3D points, with interpolation over two parameters, \(u\) and
-        \(v\), ranging between zero and one. Extending de Casteljau’s algorithm to surfaces is simply a matter of
+        \(v\), ranging between zero and one. Extending de Casteljau's algorithm to surfaces is simply a matter of
         evaluating the same algorithm as a curve at \(t = u\) on each row. This gives us one point per row, giving a
-        total of \(n\) points. We can then feed the \(n\) resulting points into de Casteljau’s algorithm for a curve
+        total of \(n\) points. We can then feed the \(n\) resulting points into de Casteljau's algorithm for a curve
         again, with \(t = v\), giving us a single point. In total, letting \(0 \leq u, v \leq 1\) defines the parametric
         surface of the bezier surface.
 
@@ -123,18 +124,94 @@
         <h2>Section II: Triangle Meshes and Half-Edge Data Structure</h2>
 
         <h3>Part 3: Area-weighted vertex normals</h3>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
-        magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-        consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-        pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est
-        laborum.
+        Half-edge meshes allow for efficient calculation of area weighted vertex normals. To calculate them for a
+        vertex, one must find all faces the vertex is a part of, find their normal, and weight that normal by the area
+        of the face it is a part of. The weighted average of the normal of all surrounding faces should be normal of the
+        vertex. Finding this normal allows for lighting calculations to be done per vertex in Gourard shading, which can
+        then be interpolated using barycentric coordinates, or interpolating the normals themselves and performing the
+        lighting calculations per fragment as in Phong shading.
+
+        <br><br>
+        <figure style="float: inline-end;">
+            <img src="images/flatPot.png" width="300px">
+            <figcaption>Flat shaded teapot.<br>Very clear edges to faces.</figcaption>
+            <br>
+            <img src="images/phongPot.png" width="300px">
+            <figcaption>Phong shaded teapot.<br>Face edges aren't as visible.<br>Corners tend to be lighted weirdly.
+            </figcaption>
+        </figure>
+
+        I assumed all faces were triangles as per the problem statement, so I had assurances that after three successive
+        half-edges I would end up at the original half edge and would have traversed all half-edges of the face. Thus,
+        starting at the half-edge stored by the vertex itself that points away from the vertex, I iterated through all
+        three half-edges of the triangle and stored their associated source vertexes. Then, I took the cross product the
+        vectors pointing from the first point to the second and third respectively, which serves as a normal scaled by
+        the face's area*, and added it to an accumulated vector. Finally, I took the third edge's twin and set that as
+        the start of the next face to iterate through. This works because the third edge points back to the original
+        vertex, so it's twin must originate from that vertex, meaning the twin's face must be a face that surrounds the
+        vertex. Using this, we enforce the invariant that the first half-edge we look at per face is the one facing away
+        from the original vertex. This allows for an easy check on when to end the process– there is only one half-edge
+        per face that points away from a particular vertex, and we maintain that the third edge's twin always points
+        away from the original vertex, so if the twin is the same as our starting half-edge then we must have started at
+        that face. Once we have the accumulated vector, we can normalize it and use it as a vertex normal.
+        <br><br>
+        This leaves two questions unanswered: why does the cross product serve as a normal scaled by area*? And what
+        about boundaries? The latter is quite simple; if the half-edge is a boundary edge, then we can go to its twin
+        (which must not be on the boundary, as well as must point toward the vertex due to the invariant and that
+        half-edges point the opposite way of their twin, as well as not being on an edge) and then it's next (which must
+        point away from the original vertex) to get to another half-edge not on the boundary that points away from the
+        original vertex. Then we can continue the algorithm as normal.
+        <br><br>
+        The cross product being a normal scaled by area* comes from the fact that the cross product is perpendicular to
+        both vectors, and its magnitude is the area of the parallelogram that is made by the two vectors. If we divide
+        the magnitude/area by two, we get half the area of the parallelogram, i.e. the area of the triangle. We also
+        know the direction is normal to the surface, and because the triangles are always oriented counterclockwise we
+        can calculate which direction the normal should go easily. If we accumulate all of the cross products, we will
+        get the weighted normals scaled by the area of the triangle times two; however, because we eventually are going
+        to normalize the accumulated cross products and the two is a constant factor, we don't have to divide it out
+        because the final normalization will do so anyways.
+
 
         <h3>Part 4: Edge flip</h3>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
-        magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-        consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-        pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est
-        laborum.
+        In theory, edge flips are simple. We just need to move a diagonal separating a quadrilateral to the other
+        diagonal. With half-edges, we need to shuffle some pointers. How hard could it be? So I thought I could logic it
+        out. So despite the <a
+            href="https://cs184.eecs.berkeley.edu/su25/hw/hw2/section2/#mesh-pointer-recommendations">warnings</a> I
+        decided to try and think through all the pointer reassignments. That went predictably bad, with faces
+        disappearing left and right and segfaults galore. After trying to debug it a few times and figuring out there
+        were both pointers to itself and pointer loops of length five, I finally heeded the warning and reassigned all
+        of the pointers, even if they theoretically shouldn't have changed. Turns out I forgot to assign two of the six
+        “next” pointers in my original implementation… Then, I was able to cull the unnecessary pointer reassignments
+        using many, many drawings of triangles, checking along the way to make sure flipping still worked.
+        <br><br>
+        I was spending a lot of time initially trying to make sure I wasn't accessing modified pointers instead of the
+        original, so to make my life easier I made copies of the originals at the very top of the function. This helped
+        immensely with implementation but also with readability, as the code wasn't a jumble of
+        <code>self->next()->next()->vertex()->halfedge()->face() = twin->next()->face()->next()->next()->face();</code>
+        (exaggerating of course, but…).
+        <br><br>
+        <figure>
+            <div style="display: flex; flex-direction: column; align-items: center;">
+                <table style="width: 100%; text-align: center; border-collapse: separate; border-width: 1em;">
+                    <tr>
+                        <td style="text-align: center;">
+                            <img src="images/normalPot.png" width="300px" />
+                            <figcaption>No flipping</figcaption>
+                        </td>
+                        <td style="text-align: center;">
+                            <img src="images/flipedPot.png" width="300px" />
+                            <figcaption>Some flipping</figcaption>
+                        </td>
+                        <td style="text-align: center;">
+                            <img src="images/uhPot.png" width="300px" />
+                            <figcaption>Too much flipping</figcaption>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <figcaption>Comparison of the original pot mesh, the pot mesh after some flips, and the pot mesh after
+                legal but malicious flips that result in a very different geometry</figcaption>
+        </figure>
 
         <h3>Part 5: Edge split</h3>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
