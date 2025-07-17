@@ -214,11 +214,59 @@
         </figure>
 
         <h3>Part 5: Edge split</h3>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
-        magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-        consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-        pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est
-        laborum.
+        Splitting edges has many pointer reassignments like flip edge, but also creates new half-edges, edges, vertexes,
+        and faces. For my own sanity, I segmented the code to set all of the pointers for each object all at the same
+        time, for example assigning all the half-edge “next” pointers in one go. Drawing out the triangles then made it
+        easy to see which edges should point to what, which objects needed to be created, etc. Implementing per
+        functionality versus object helped me mentally focus on one task rather than having to context switch between
+        each object. Partially because of this, my code worked first try, which was definitely a welcome surprise.
+        <br><br>
+        I also implemented support for splitting boundary edges as extra credit. To split boundary edges, you only split
+        one side of the triangle. I renamed all the variables associated with one side of the triangle by adding a big
+        obnoxious suffix, and from there it was easy to isolate the parts associated with that side into a
+        <code>if (!isBoundary)</code> block. The refactoring was almost mechanical and after placing all the suffixed
+        pointer assignments into the conditional, minimal changes had to be made to make boundary edge splits work.
+
+        <br><br>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table style="width: 100%; text-align: center; border-collapse: separate; border-width: 1em;">
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="images/headlightNone.png" width="300px" />
+                        <figcaption>Original headlight mesh</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="images/headlightSplit.png" width="300px" />
+                        <figcaption>Split headlight mesh</figcaption>
+                    </td>
+                </tr>
+            </table>
+            <table style="width: 100%; text-align: center; border-collapse: separate; border-width: 1em;">
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="images/hoodNone.png" width="300px" />
+                        <figcaption>Original hood mesh</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="images/hoodFlip.png" width="300px" />
+                        <figcaption>Hood mesh after flips</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="images/hoodFlipSplit.png" width="300px" />
+                        <figcaption>Hood mesh after flips and splits</figcaption>
+                    </td>
+                </tr>
+            </table>
+            <table style="width: 100%; text-align: center; border-collapse: separate; border-width: 1em;">
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="images/windowSplit.png" width="300px" />
+                        <figcaption>Window mesh after boundary splits</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
 
         <h3>Part 6: Loop subdivision for mesh upsampling</h3>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
