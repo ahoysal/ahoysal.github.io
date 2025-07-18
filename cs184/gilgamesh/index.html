@@ -156,11 +156,11 @@
         that face. Once we have the accumulated vector, we can normalize it and use it as a vertex normal.
         <br><br>
         This leaves two questions unanswered: why does the cross product serve as a normal scaled by area*? And what
-        about boundaries? The latter is quite simple; if the half-edge is a boundary edge, then we can go to its twin
-        (which must not be on the boundary, as well as must point toward the vertex due to the invariant and that
-        half-edges point the opposite way of their twin, as well as not being on an edge) and then it's next (which must
-        point away from the original vertex) to get to another half-edge not on the boundary that points away from the
-        original vertex. Then we can continue the algorithm as normal.
+        about boundaries? The latter is quite simple; if we hit a boundary while traversing the triangles around the
+        vertex counter-clockwise, then there must be a boundary right of the original half-edge we started at because
+        the mesh is a manifold. Thus we can continue traversing clockwise from the original triangle until we hit an
+        edge, in which case we have hit both edges of the fan that emanates from the original vertex. There cannot be
+        any other triangles around the point, again because the mesh is a manifold, so we can stop.
         <br><br>
         The cross product being a normal scaled by area* comes from the fact that the cross product is perpendicular to
         both vectors, and its magnitude is the area of the parallelogram that is made by the two vectors. If we divide
