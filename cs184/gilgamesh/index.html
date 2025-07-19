@@ -22,8 +22,16 @@
 		-->
 
         <h2>Overview</h2>
-        Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole.
-        Share your thoughts on what interesting things you've learned from completing the homework.
+        GilgaMesh is a mesh editor that supports various mesh operations and some support for bezier curves and
+        surfaces. The name is just a pun, there are no kings of Uruk here (yet). As a bezier editor, It is able to draw
+        bezier curves at each interpolation step and move around each point to see how it affects the whole, as well as
+        turn bezier surfaces into a triangle mesh. As a mesh editor, it is able to flip and split triangles, smooth
+        shade models using Phong shading, and perform Loop subdivision on models.
+
+        3D modeling has always been interesting as a concept to me but I've never done it myself as it seemed like a
+        kind of mystical art. It still remains that way in a sense, but this project has demystified the process a
+        little by showing what tools are at modelers' disposal.
+
 
         <h2>Section I: Bezier Curves and Surfaces</h2>
 
@@ -123,7 +131,7 @@
 
         <h2>Section II: Triangle Meshes and Half-Edge Data Structure</h2>
 
-        <h3>Part 3: Area-weighted vertex normals</h3>
+        <h3 id="part3">Part 3: Area-weighted vertex normals</h3>
         Half-edge meshes allow for efficient calculation of area weighted vertex normals. To calculate them for a
         vertex, one must find all faces the vertex is a part of, find their normal, and weight that normal by the area
         of the face it is a part of. The weighted average of the normal of all surrounding faces should be normal of the
@@ -181,7 +189,7 @@
         disappearing left and right and segfaults galore. After trying to debug it a few times and figuring out there
         were both pointers to itself and pointer loops of length five, I finally heeded the warning and reassigned all
         of the pointers, even if they theoretically shouldn't have changed. Turns out I forgot to assign two of the six
-        “next” pointers in my original implementation… Then, I was able to cull the unnecessary pointer reassignments
+        "next" pointers in my original implementation… Then, I was able to cull the unnecessary pointer reassignments
         using many, many drawings of triangles, checking along the way to make sure flipping still worked.
         <br><br>
         I was spending a lot of time initially trying to make sure I wasn't accessing modified pointers instead of the
@@ -213,10 +221,10 @@
                 legal but malicious flips that result in a very different geometry</figcaption>
         </figure>
 
-        <h3>Part 5: Edge split</h3>
+        <h3 id="part5">Part 5: Edge split</h3>
         Splitting edges has many pointer reassignments like flip edge, but also creates new half-edges, edges, vertexes,
         and faces. For my own sanity, I segmented the code to set all of the pointers for each object all at the same
-        time, for example assigning all the half-edge “next” pointers in one go. Drawing out the triangles then made it
+        time, for example assigning all the half-edge "next" pointers in one go. Drawing out the triangles then made it
         easy to see which edges should point to what, which objects needed to be created, etc. Implementing per
         functionality versus object helped me mentally focus on one task rather than having to context switch between
         each object. Partially because of this, my code worked first try, which was definitely a welcome surprise.
@@ -269,12 +277,165 @@
 
 
         <h3>Part 6: Loop subdivision for mesh upsampling</h3>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
-        magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-        consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-        pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est
-        laborum.
+        Loop subdivision is a two step process used to subdivide a mesh, where you split each triangle into four, then
+        adjust vertex positions based on the adjacent vertices. It makes a little more sense to flip those steps in
+        practice by computing the new positions first, then subdividing each triangle, and finally moving the vertexes
+        into their precomputed new position.
+        <br><br>
+        The updated position of a vertex depends on if it was in the original mesh or not. I first computed the original
+        vertexes by traversing through each of the surrounding vertices (see <a href="#part3">part 3</a>), then finding
+        the new position \(p_n\) from a weighted average of the old position \(p_o\) and the \(n\) surrounding vertices'
+        positions \(p_i\):
+        \[
+        p_n = (1 - n \cdot u) \cdot p_o + \sum^{n}_{i=1} u \cdot p_i \\
+        n = \text{valence} = \text{# of old vertexes around} \\
+        u =
+        \begin{cases}
+        \frac{3}{16} & \text{if } n = 3 \\
+        \frac{3}{8n} & \text{otherwise} \\
+        \end{cases}
+        \]
+        For each edge, we then need a new vertex to serve as endpoints for the internal subdivision edges. The new
+        position is defined as a weighted average of \(\frac{3}{8}^{\text{th}}\) for each terminator of the edge it is
+        on and \(\frac{1}{8}^{\text{th}}\) the opposite two sides (all vertexes of which can be accessed through
+        traversing the half-edge associated with the edge or half-edge's twin). At this point in the implementation, I
+        checked that all my calculations made sense by modifying the positions without subdivision, which helped me
+        catch some bugs. After computing and storing these positions, we can proceed to actually modifying mesh
+        topology.
+        <br><br>
+        Each triangle now needs to be split into four smaller triangles. We can do this by splitting each edge in the
+        original mesh once. Figuring out when an edge was in the original mesh was tricky and caused many bugs, but I
+        settled on marking vertices as "new" as they were added by the process and making sure neither side of the edge
+        was marked as such.
+        <br><br>
+        Splitting the mesh was already implemented in <a href="#part5">part 5</a>, so the complexity came from marking
+        <i>edges</i> as new, which was required for the next step. Note that a new edge is NOT simply an edge object
+        that was not in the original mesh, since true edges in the original mesh get split into two different edge
+        objects that were not part of the original mesh but do not need to be split again. Rather, a new edge is one
+        that does not correspond to (half of) an edge in the original mesh. Since the edge splitting algorithm
+        implementation takes the original half-edge associated with the edge and its twin and puts them on two different
+        edges running parallel to the initial edge, I stored both before the split and cross referenced the edge they
+        end up at with all four edges the edge splitting algorithm creates. If the edge was the same as one of the edges
+        parallel to the original edge, I didn't mark it as new, and vice versa.
+        <br><br>
+        To ensure regularity in splitting, we now need to flip all new edges that go from a new vertex to an old vertex.
+        By marking the edges as new or not, this becomes trivial; just do a check on the vertices of all new edges, flip
+        as needed, and mark them as no longer new for the next pass. Debugging this, however, took a long time. I had to
+        edit the mesh feature detail panel to add data on the "newness" of an edge before I realized that iterating over
+        the original mesh and iterating over the "not new edges" wasn't the same thing, since two "not new edges" were
+        added every time a original mesh edge was split, meaning lots of spinning wheels of death while it tried to
+        recursively split all edges to infinity. I never want to look at another "isNew" variable again.
+        <br><br>
+        Finally, I just moved all the vertexes from their old position to the precalculated new position from the
+        earlier parts, marking all vertices as old again for future iterations, and that was loop subdivision
+        implemented!
 
+        <h4>Some... quirks with Loop subdivision</h4>
+        Loop subdivision usually assumes you want a smooth model, so it doesn't take well to sharp points. Points tend
+        to form into smooth lumps. However, if you want to keep some sharpness, subdividing sharp triangles into smaller
+        triangles gives more weight to the existing points near the sharp point, preserving some pointyness. Below is a
+        table of two similar scenes at different loop subdivision levels, with the bottom row having more subdivisions
+        at the base. Notice how the second row preserves more of the point.
+        <br><br>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table style="width: 100%; text-align: center; border-collapse: separate; border-width: 1em;">
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="images/sharp0.png" width="300px" />
+                        <figcaption>No subdvision, 0 iterations</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="images/sharp1.png" width="300px" />
+                        <figcaption>No subdvision, 1 iteration</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="images/sharp2.png" width="300px" />
+                        <figcaption>No subdvision, 2 iterations</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="images/split0.png" width="300px" />
+                        <figcaption>Subdvision, 0 iterations</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="images/split1.png" width="300px" />
+                        <figcaption>Subdvision, 1 iteration</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="images/split2.png" width="300px" />
+                        <figcaption>Subdvision, 2 iterations</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <br>
+        Another quirk is that symmetric geometries, if their topology isn't in the same symmetry group, will not retain
+        those symmetries. Take for example a cube. The geometry had octahedral symmetry, yet the topology of a naïve
+        cube contains only one diagonal along each face, so the topology is not symmetrical in that way. Thus the
+        subdivisions are asymmetric, meaning the geometry becomes so as well after some iterations. By preprocessing to
+        make the topology symmetric (for example splitting each diagonal per face into a cross), we preserve more the of
+        the geometric symmetries as well.
+        <br><br>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table style="width: 100%; text-align: center; border-collapse: separate; border-width: 1em;">
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="images/cube0.png" width="300px" />
+                        <figcaption>Base non-symmetric topology</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="images/symmetric0.png" width="300px" />
+                        <figcaption>Subdivided per face topology</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="images/cube1.png" width="300px" />
+                        <figcaption>Base, 1 iteration</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="images/symmetric1.png" width="300px" />
+                        <figcaption>Subdivided, 1 iteration</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="images/cube2.png" width="300px" />
+                        <figcaption>Base, 2 iterations</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="images/symmetric2.png" width="300px" />
+                        <figcaption>Subdivided, 2 iterations</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="images/cube3.png" width="300px" />
+                        <figcaption>Base, 3 iterations</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="images/symmetric3.png" width="300px" />
+                        <figcaption>Subdivided, 3 iterations</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="images/cube4.png" width="300px" />
+                        <figcaption>Base, 4 iterations</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="images/symmetric4.png" width="300px" />
+                        <figcaption>Subdivided, 4 iterations</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <br>
+        The base form gains a pentagonal profile in a way the original didn't have symmetrically, whereas the subdivided
+        one does not and stays vaugley six-sided.
+
+        <!--
         <h2>(Optional) Section III: Potential Extra Credit - Art Competition: Model something Creative</h2>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
         magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
@@ -292,7 +453,7 @@
                 </ul>
             </li>
         </ul>
-    </div>
+    </div>-->
 </body>
 
 <footer>
