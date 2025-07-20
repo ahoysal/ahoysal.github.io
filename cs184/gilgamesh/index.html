@@ -434,6 +434,27 @@
         <br>
         The base form gains a pentagonal profile in a way the original didn't have symmetrically, whereas the subdivided
         one does not and stays vaugley six-sided.
+        <h4>Extra Credit: Loop subdivision on boundaries</h4>
+        To implement Loop subdivision on boundaries, I found both boundaries connected to the mesh by iterating around,
+        then computed the new boundary vertex position by a <a
+            href="https://www.geometry.caltech.edu/pubs/DDMD16_SuppMat1.pdf">three-fourths-one-fourths weighting</a>
+        between the old point position and the two neighboring boundary points. This makes the boundary still sharp while
+        curving along the boundary. The cool results are below!
+        <br><br>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table style="width: 100%; text-align: center; border-collapse: separate; border-width: 1em;">
+                <tr>
+                    <td style="text-align: center;">
+                        <img src="images/headlightBounds.png" width="300px" />
+                        <figcaption>Headlight with no Loop subdivision</figcaption>
+                    </td>
+                    <td style="text-align: center;">
+                        <img src="images/headlightSmooth.png" width="300px" />
+                        <figcaption>Headlight Loop subdivided! Rounded.</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
         <br><br>
 
         <!--
