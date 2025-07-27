@@ -144,7 +144,7 @@
         split the primitives along the longest axis. There are many different heuristics for how to split the primitives
         into two smaller sets, but I chose to split through the median of the primitive's centroid's coordinate along
         the longest axis. This just meant sorting the primitive centroids by their longest axis's coordinate (in place,
-        see extra credit section) and assigning the low half to one child and the high half to another child. These two
+        see <a href="ec">extra credit section</a>) and assigning the low half to one child and the high half to another child. These two
         assignments can then be delegated to a recursive call of the same algorithm. Each child now has half the
         elements of the parent because we split by the median, so eventually there will be fewer than the max amount of
         primitives per node and the recursion will terminate.
@@ -173,16 +173,16 @@
                     <td style="text-align: center;">
                         <img src="images/beast.png" width="200px" />
                     </td>
-                    <td>96.7s<br>10980 intersections/ray</td>
-                    <td>0.150s (0.100s + 0.0498s)<br>3.80 interesections/ray</td>
+                    <td>78.3s<br>5130 intersections/ray</td>
+                    <td>0.150s (0.0845s + 0.0651s)<br>6.12 interesections/ray</td>
                 </tr>
                 <tr>
                     <td>Max Planck (50801)</td>
                     <td style="text-align: center;">
                         <img src="images/maxplank.png" width="200px" />
                     </td>
-                    <td>78.3s<br>5130 intersections/ray</td>
-                    <td>0.150s (0.0845s + 0.0651s)<br>6.12 interesections/ray</td>
+                    <td>96.7s<br>10980 intersections/ray</td>
+                    <td>0.150s (0.100s + 0.0498s)<br>3.80 interesections/ray</td>
                 </tr>
                 <tr>
                     <td>Angel (133796)<br>1 ray/pixel</td>
@@ -226,7 +226,7 @@
         pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est
         laborum.
 
-        <h2>(Optional) Part 6: Extra Credit Opportunities</h2>
+        <h2 id="ec">(Optional) Part 6: Extra Credit Opportunities</h2>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
         magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
         consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
