@@ -26,6 +26,16 @@
 
         <h2>Ray Generation and Scene Intersection (Part 1)</h2>
         <h3>From Pixel to World: Generating Rays</h3>
+        <figure style="float: inline-end;">
+            <img src="images/spheresNormals.png" width="300px">
+            <figcaption>Spheres rendered by normal</figcaption>
+            <br>
+            <img src="images/dragonNormals.png" width="300px">
+            <figcaption>Dragon rendered by normal</figcaption>
+            <br>
+            <img src="images/bunnyNormals.png" width="300px">
+            <figcaption>Bunny rendered by normal</figcaption>
+        </figure>
         The basics of a path tracer are sending out rays and finding out what they hit. Thus, we need to find a way to
         generate rays from the camera in the direction of each pixel on the screen. Since we start with an \((x, y)\)
         coordinate in terms of pixels, we can make the rendering resolution agnostic by converting the pixel coordinate
