@@ -103,16 +103,16 @@
         vectors for each vertex on the triangle to give a normal at the intersection point as well.
         <h3>Stopping when Spheres are Near</h3>
         Sphere intersections follow the same basic method, but instead substituting the ray equation into an implicitly
-        defined sphere. Defining the sphere's center as \(c\),
+        defined sphere. Defining the sphere's center as \(C\),
         \[
         \begin{cases}
-        p = O + Dt & \text{Ray equation} \\
-        r^2 = (x-c_x)^2 + (y-c_y)^2 + (z-c_z)^2 = \sum_{1}^{3} (p[i] - c[i])^2 & \text{Implicit Sphere}
+        P = O + Dt & \text{Ray equation} \\
+        r^2 = (x-C_x)^2 + (y-C_y)^2 + (z-C_z)^2 = \sum_{i = 1}^{3} (P[i] - C[i])^2 & \text{Implicit Sphere}
         \end{cases}
         \]
         This can be formed into a quadratic equation:
         \[
-        0 = -r^2 + \sum_{1}^{3} (O[i] + D[i]t - c[i])^2
+        0 = -r^2 + \sum_{i = 1}^{3} (O[i] + D[i]t - C[i])^2
         \equiv
         0 = (O^2 - 2O\cdot C + C^2 - r^2) + 2D\cdot(O-C)t + D^2t^2
         \]
