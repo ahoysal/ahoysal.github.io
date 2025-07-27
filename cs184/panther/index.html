@@ -52,10 +52,10 @@
         space. The vector from the camera to our pixel's transformed coordinates is then the transformed value minus the
         origin, which is just the transformed value. Finally, because we know the ray originates at the camera, all we
         need to do to convert from the ray in camera space to world space is simply apply the rotation matrix of the
-        camera to rotate the ray in conjunction with the camera. Since vectors (as opposed to points) aren’t affected by
+        camera to rotate the ray in conjunction with the camera. Since vectors (as opposed to points) aren't affected by
         translations, we don't need to worry about translations or homogenous coordinates, and we can just apply the
         rotation matrix. The transformed vector now gives us a vector pointing in the direction from the camera origin
-        to the pixel's coordinates on the image plane in world space. This vector normalized, along with the camera’s
+        to the pixel's coordinates on the image plane in world space. This vector normalized, along with the camera's
         position in world space serving as the ray's origin, defines a ray going through a specified pixel in world
         space. We can also add some randomness by peturbing the ray by a random amount between \([0,1)\)in the \(x\) and
         \(y\) directions while in pixel space to sample different directions within the same pixel.
@@ -127,14 +127,84 @@
         the sphere's origin to the intersection point (which we can find by plugging in the computed \(t\) value into
         the original ray equation).
 
-<!--
         <h2>Part 2: Bounding Volume Hierarchy</h2>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
-        magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-        consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-        pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est
-        laborum.
 
+        A Bounding Volume Hierarchy is an acceleration structure designed to cut down on the number of intersection
+        tests needed per ray. It achieves this by creating a binary tree of progressively smaller bounding boxes around
+        other bounding boxes or primitives until less than a certain number of primitives remain within, which becomes a
+        leaf of the tree. If a ray doesn't intersect the parent's bounding box, all children's bounding boxes (and as a
+        result all of the leaf nodes' primitives) are contained within and so the tree can be pruned. This leads to
+        O(log n) as opposed to O(n) intersection tests in the average case where n is the number of triangles, since the
+        tree's height is O(log n) and the number of primitives within each leaf is bounded by a constant "max primitives
+        per node".
+        <br><br>
+        To construct the BVH, we can run a recursive algorithm to build nodes. We first find the minimum bounding box of
+        all primitives this node is responsible for. If the number of primitives is less than a constant max amount of
+        primitives per node, then this node can be a leaf and we don't need to do any more splitting. Otherwise, we'll
+        split the primitives along the longest axis. There are many different heuristics for how to split the primitives
+        into two smaller sets, but I chose to split through the median of the primitive's centroid's coordinate along
+        the longest axis. This just meant sorting the primitive centroids by their longest axis's coordinate (in place,
+        see extra credit section) and assigning the low half to one child and the high half to another child. These two
+        assignments can then be delegated to a recursive call of the same algorithm. Each child now has half the
+        elements of the parent because we split by the median, so eventually there will be fewer than the max amount of
+        primitives per node and the recursion will terminate.
+        <br><br>
+        The BVH greatly sped up rendering times. For Max Planck (50801 triangles), rendering time was cut from 96.7
+        seconds to 0.150 seconds (0.0845 for creating the BVH and 0.0651 to find ray intersections), coming from 5130
+        intersections/ray down to 6.12. For the angel statue, 236 seconds became 0.292 seconds (0.233s BVH + 0.0597s
+        intersections), with 4.98 intersections/ray instead of 9.50k. The intersections per ray dropped especially fast
+        because the scenes contained significant areas of empty space, where many rays were immediately able to exit
+        early because they didn't hit the first bounding box. In scenes with less void, the effect might be less
+        dramatic but still significant. Bounding volume hierarchies also let me render a version of the angel statue in
+        1.10 seconds with 16 rays per pixel, which went so impossibly slow on the non-BVH version that I aborted it
+        after a few minutes at single digit percentage completion.
+        <br><br>
+
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <table style="width: 100%; text-align: center; border-collapse: separate; border-width: 1em;">
+                <tr>
+                    <td>Model (Primitive Count)</td>
+                    <td>Normal Render</td>
+                    <td>Non-BVH Stats</td>
+                    <td>BVH Stats<br>(BVH construction time + render time)</td>
+                </tr>
+                <tr>
+                    <td>Beast (64618)</td>
+                    <td style="text-align: center;">
+                        <img src="images/beast.png" width="200px" />
+                    </td>
+                    <td>96.7s<br>10980 intersections/ray</td>
+                    <td>0.150s (0.100s + 0.0498s)<br>3.80 interesections/ray</td>
+                </tr>
+                <tr>
+                    <td>Max Planck (50801)</td>
+                    <td style="text-align: center;">
+                        <img src="images/maxplank.png" width="200px" />
+                    </td>
+                    <td>78.3s<br>5130 intersections/ray</td>
+                    <td>0.150s (0.0845s + 0.0651s)<br>6.12 interesections/ray</td>
+                </tr>
+                <tr>
+                    <td>Angel (133796)<br>1 ray/pixel</td>
+                    <td style="text-align: center;">
+                        <img src="images/lucy.png" width="200px" />
+                    </td>
+                    <td>236s<br>9500 intersections/ray</td>
+                    <td>0.292s (0.233s + 0.0597s)<br>4.98 interesections/ray</td>
+                </tr>
+                <tr>
+                    <td>Angel (133796)<br>16 ray/pixel</td>
+                    <td style="text-align: center;">
+                        <img src="images/lucy1.png" width="200px" />
+                    </td>
+                    <td>N/A</td>
+                    <td>1.10s (0.232s + 0.872s)<br>5.10 interesections/ray</td>
+                </tr>
+            </table>
+        </div>
+
+
+        <!--
         <h2>Part 3: Direct Illumination</h2>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
         magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
