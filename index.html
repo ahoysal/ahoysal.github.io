@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aagrim Hoysal — Home</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --black: #261918;
+            --paper: #f4ecdc;
+            --orange-detail: #b94b36;
+            --orange-main: #df612e;
+            --orange-highlight: #da823b;
+            --orange-bg: #dda244;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            background-color: var(--paper);
+            color: var(--black);
+            font-family: 'Cormorant Garamond', serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+        }
+
+        /* Outer poster border */
+        .poster-outer {
+            width: 100%;
+            max-width: 820px;
+            min-height: 92vh;
+            background-color: var(--paper);
+            border: 3px solid var(--black);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Inner framed canvas */
+        .poster-inner {
+            flex: 1;
+            border: 1.5px solid var(--black);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            background: radial-gradient(circle at 20% 25%, #ffcc66 0%, #f1a84f 45%, #ecc996 85%, #f4ecdc 100%);
+        }
+
+        /* Top decorative issue-style banner */
+        .masthead-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.4rem 1rem;
+            border-bottom: 1.5px solid var(--black);
+            font-family: 'Cinzel', serif;
+            font-size: 0.72rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            background: rgba(244, 236, 220, 0.75);
+        }
+
+        /* Primary Name Header (Jugend-style lettering) */
+        .header-title {
+            text-align: center;
+            padding: 1rem 2rem 0.6rem;
+            border-bottom: 1.5px solid var(--black);
+            background: rgba(244, 236, 220, 0.55);
+            backdrop-filter: blur(2px);
+        }
+
+        .header-title h1 {
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            font-size: clamp(2.4rem, 6vw, 4.4rem);
+            letter-spacing: 0.14em;
+            line-height: 1;
+            color: var(--black);
+            text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.4);
+        }
+
+        .header-title .tagline {
+            font-size: 1.05rem;
+            font-style: italic;
+            letter-spacing: 0.08em;
+            margin-top: 0.35rem;
+            color: #3b2f28;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            position: relative;
+            padding: 2.5rem 2.5rem 8rem 2.5rem;
+        }
+
+        /* Bottom-left Flower Illustration */
+        .flower-anchor {
+            position: absolute;
+            bottom: 0px;
+            left: 1rem;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .flower-anchor img {
+            width: clamp(140px, 30vw, 220px);
+            height: auto;
+            image-rendering: pixelated; /* Keeps pixel-art clean and crisp */
+            display: block;
+        }
+
+        /* Right-aligned Navigation Links */
+        .links-sidebar {
+            width: 100%;
+            max-width: 290px;
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            gap: 1.1rem;
+        }
+
+        .link-card {
+            display: block;
+            text-decoration: none;
+            color: var(--black);
+            background: rgba(244, 236, 220, 0.82);
+            border: 1px solid var(--black);
+            padding: 0.75rem 1.1rem;
+            text-align: right;
+            transition: all 0.22s ease-in-out;
+            position: relative;
+        }
+
+        .link-card::before {
+            content: "";
+            position: absolute;
+            inset: 2px;
+            border: 1px solid rgba(27, 23, 20, 0.25);
+            pointer-events: none;
+        }
+
+        .link-title {
+            font-family: 'Cinzel', serif;
+            font-size: 0.95rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            font-weight: 600;
+            display: block;
+        }
+
+        .link-desc {
+            font-size: 0.85rem;
+            font-style: italic;
+            color: #55443a;
+            margin-top: 2px;
+            display: block;
+        }
+
+        .link-card:hover {
+            background-color: var(--orange-main);
+            color: #fff;
+            transform: translateX(-4px);
+            box-shadow: 4px 4px 0 var(--black);
+        }
+
+        .link-card:hover .link-desc {
+            color: #faeedb;
+        }
+
+        /* Bottom Poster Inscription */
+        .poster-footer {
+            border-top: 1.5px solid var(--black);
+            padding: 0.45rem 1rem;
+            text-align: center;
+            font-size: 0.8rem;
+            font-style: italic;
+            letter-spacing: 0.05em;
+            background: rgba(244, 236, 220, 0.75);
+        }
+
+        @media (max-width: 640px) {
+            .content-area {
+                align-items: flex-start;
+                padding: 2rem 1rem 12rem 1rem;
+            }
+            .links-sidebar {
+                max-width: 100%;
+            }
+            .flower-anchor {
+                left: 0.5rem;
+            }
+            .flower-anchor img {
+                width: 130px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <main class="poster-outer">
+        <div class="poster-inner">
+            
+            <!-- Top vintage banner -->
+            <div class="masthead-meta">
+                <span>MMXXVI</span>
+                <span>• Aagrim Thyamagundalu Hoysal •</span>
+                <span>No. 1</span>
+            </div>
+
+            <!-- Top Name Header -->
+            <header class="header-title">
+                <h1>Aagrim Hoysal</h1>
+                <p class="tagline">Computer Science • Linguistics • UC Santa Barbara</p>
+            </header>
+
+            <!-- Main Body Area -->
+            <section class="content-area">
+                
+                <!-- Bottom-Left Flower Asset -->
+                <div class="flower-anchor">
+                    <!-- Replace src with your flower image path -->
+                    <img src="images/jugendFlower.png" alt="Orange lily illustration" />
+                </div>
+
+                <!-- Right-hand Links -->
+                <nav class="links-sidebar">
+                    <a href="portfolio/" class="link-card">
+                        <span class="link-title">Portfolio</span>
+                        <span class="link-desc">What I've been up to</span>
+                    </a>
+
+                    <a href="https://github.com/ahoysal" class="link-card" target="_blank" rel="noopener">
+                        <span class="link-title">Github</span>
+                        <span class="link-desc">Open source contributions</span>
+                    </a>
+
+                    <a href="mailto:aagrim@ucsb.edu" class="link-card">
+                        <span class="link-title">Contact</span>
+                        <span class="link-desc">Say hello or collaborate</span>
+                    </a>
+                </nav>
+
+            </section>
+
+            <!-- Bottom Jugend-style credits band -->
+            <footer class="poster-footer">
+                A crude imitation inspired by Otto Eckmann's JUGEND No. 14
+            </footer>
+
+        </div>
+    </main>
+
+</body>
+</html>
